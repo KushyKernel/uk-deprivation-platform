@@ -21,14 +21,44 @@ The UK government publishes a lot of open data. None of it talks to each other. 
 
 Each nation has its own deprivation index. All four are included.
 
-| Nation | Index | Geography | Last Updated |
+| Nation | Index | Geography | Latest Release |
 |---|---|---|---|
-| England | Index of Multiple Deprivation (IMD) | LSOAs (~33,000) | 2019 |
-| Scotland | Scottish IMD (SIMD) | Data Zones (~6,976) | 2020 |
-| Wales | Welsh IMD (WIMD) | LSOAs (~1,909) | 2019 |
+| England | Index of Multiple Deprivation (IMD) | LSOAs (33,755) | 2025 |
+| Scotland | Scottish IMD (SIMD) | Data Zones (6,976) | 2020 |
+| Wales | Welsh IMD (WIMD) | LSOAs (1,917) | 2025 |
 | Northern Ireland | NI Multiple Deprivation Measure (NIMDM) | Super Output Areas (~890) | 2017 |
 
-All four use the same domain structure (income, employment, health, education, housing, crime, environment) so cross-nation comparisons are possible.
+All four use the same domain structure (income, employment, health, education, housing, crime, environment). Cross-nation comparisons are done on normalised percentile rank, not raw scores, because each nation's methodology differs slightly.
+
+## IMD versions used
+
+The platform uses the latest release as the primary dataset, joined to the previous two releases to enable trend analysis and the IMD trajectory forecast model.
+
+### England
+
+| Version | Boundaries | Status |
+|---|---|---|
+| IMD 2025 | 2021 LSOAs (33,755) | Primary — 55 indicators |
+| IMD 2019 | Remapped to 2021 via ONS lookup | Trend comparison |
+| IMD 2015 | Remapped to 2021 via ONS lookup | Trend comparison |
+
+### Wales
+
+| Version | Boundaries | Status |
+|---|---|---|
+| WIMD 2025 | 2021 LSOAs (1,917) | Primary |
+| WIMD 2019 | 2011 LSOAs (1,909) — 8 boundary changes handled | Trend comparison |
+| WIMD 2014 | 2011 LSOAs | Trend comparison |
+
+### Scotland
+
+| Version | Boundaries | Status |
+|---|---|---|
+| SIMD 2020 | 2011 Data Zones (6,976) | Primary — next release due late 2026 |
+| SIMD 2016 | 2011 Data Zones — clean join | Trend comparison |
+| SIMD 2012 | 2001 Data Zones — boundary lookup required | Trend comparison |
+
+Versions are not joined on raw scores. Each release is normalised to percentile rank within that release before any cross-version comparison is made.
 
 ---
 
@@ -39,7 +69,9 @@ All free. One requires a free account.
 | Domain | Source | Auth |
 |---|---|---|
 | Geography | [Postcodes.io](https://api.postcodes.io) | None |
-| Deprivation | [MHCLG IMD](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2019) | None |
+| Deprivation (England) | [MHCLG IMD 2025](https://www.gov.uk/government/statistics/english-indices-of-deprivation-2025) | None |
+| Deprivation (Wales) | [WIMD 2025](https://www.gov.wales/welsh-index-multiple-deprivation-2025) | None |
+| Deprivation (Scotland) | [SIMD 2020](https://www.gov.scot/collections/scottish-index-of-multiple-deprivation-2020) | None |
 | Crime | [data.police.uk](https://data.police.uk/api/) | None |
 | Energy (EPC) | [MHCLG EPC API](https://epc.opendatacommunities.org) | Free account |
 | Health | [NHS Fingertips](https://fingertips.phe.org.uk/api/) | None |
@@ -77,6 +109,9 @@ LSOA code is the join key for everything. Postcodes.io resolves any postcode to 
 | Health vulnerability index | Dimensionality reduction (PCA) | How does health need compare nationally? |
 | House price model | Regression (XGBoost) | What drives prices here vs elsewhere? |
 | Causal impact | Double ML (EconML) | Does deprivation actually cause worse outcomes? |
+| IMD trajectory forecast | Classification (XGBoost + temporal CV) | Will this area improve, stay stable, or worsen by the next IMD release? |
+
+The IMD trajectory model is trained on rank changes between historical IMD releases, using changes in crime, house prices, EPC ratings, health indicators and economic activity as features. Output is a three-class prediction (improving / stable / worsening) with confidence score and SHAP explanation per LSOA.
 
 ---
 
@@ -161,13 +196,19 @@ uk-deprivation-platform/
 ## Roadmap
 
 - [x] Project design and data source verification
+- [x] IMD version research and joinability assessment
+- [ ] Boundary harmonisation (2011 to 2021 LSOA lookups for England and Wales)
 - [ ] Ingestion pipelines for all 9 sources
+- [ ] IMD historical dataset joins (2015, 2019, 2025 for England and Wales)
 - [ ] LSOA feature store
 - [ ] EDA notebooks
 - [ ] Clustering model
 - [ ] Energy poverty classifier
 - [ ] Crime forecasting model
+- [ ] Health vulnerability index
+- [ ] House price regression
 - [ ] Causal model
+- [ ] IMD trajectory forecast model
 - [ ] FastAPI serving layer
 - [ ] Streamlit dashboard v1
 - [ ] Model cards
